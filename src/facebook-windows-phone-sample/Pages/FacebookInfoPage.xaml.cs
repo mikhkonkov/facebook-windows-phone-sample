@@ -12,33 +12,30 @@ using System.Windows.Shapes;
 using Microsoft.Phone.Controls;
 using System.Windows.Media.Imaging;
 using Facebook;
+using System.IO;
+using facebook_windows_phone_sample.Image;
+using System.IO.IsolatedStorage;
 
-namespace facebook_windows_phone_sample.Pages
-{
-    public partial class FacebookInfoPage : PhoneApplicationPage
-    {
+namespace facebook_windows_phone_sample.Pages {
+    public partial class FacebookInfoPage : PhoneApplicationPage {
         private string _accessToken;
         private string _userId;
 
-        public FacebookInfoPage()
-        {
+        public FacebookInfoPage() {
             InitializeComponent();
         }
 
-        protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
-        {
+        protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e) {
             base.OnNavigatedTo(e);
             _accessToken = NavigationContext.QueryString["access_token"];
             _userId = NavigationContext.QueryString["id"];
         }
 
-        private void PhoneApplicationPage_Loaded(object sender, RoutedEventArgs e)
-        {
+        private void PhoneApplicationPage_Loaded(object sender, RoutedEventArgs e) {
             LoadFacebookData();
         }
 
-        private void LoadFacebookData()
-        {
+        private void LoadFacebookData() {
             GetUserProfilePicture();
 
             GraphApiSample();
@@ -46,8 +43,7 @@ namespace facebook_windows_phone_sample.Pages
             FqlSample();
         }
 
-        private void GetUserProfilePicture()
-        {
+        private void GetUserProfilePicture() {
             // available picture types: square (50x50), small (50xvariable height), large (about 200x variable height) (all size in pixels)
             // for more info visit http://developers.facebook.com/docs/reference/api
             string profilePictureUrl = string.Format("https://graph.facebook.com/{0}/picture?type={1}&access_token={2}", _userId, "square", _accessToken);
@@ -55,22 +51,18 @@ namespace facebook_windows_phone_sample.Pages
             picProfile.Source = new BitmapImage(new Uri(profilePictureUrl));
         }
 
-        private void GraphApiSample()
-        {
+        private void GraphApiSample() {
             var fb = new FacebookClient(_accessToken);
 
-            fb.GetCompleted += (o, e) =>
-            {
-                if (e.Error != null)
-                {
+            fb.GetCompleted += (o, e) => {
+                if (e.Error != null) {
                     Dispatcher.BeginInvoke(() => MessageBox.Show(e.Error.Message));
                     return;
                 }
 
                 var result = (IDictionary<string, object>)e.GetResultData();
 
-                Dispatcher.BeginInvoke(() =>
-                {
+                Dispatcher.BeginInvoke(() => {
                     ProfileName.Text = "Hi " + (string)result["name"];
                     FirstName.Text = "First Name: " + (string)result["first_name"];
                     FirstName.Text = "Last Name: " + (string)result["last_name"];
@@ -80,14 +72,11 @@ namespace facebook_windows_phone_sample.Pages
             fb.GetAsync("me");
         }
 
-        private void FqlSample()
-        {
+        private void FqlSample() {
             var fb = new FacebookClient(_accessToken);
 
-            fb.GetCompleted += (o, e) =>
-            {
-                if (e.Error != null)
-                {
+            fb.GetCompleted += (o, e) => {
+                if (e.Error != null) {
                     Dispatcher.BeginInvoke(() => MessageBox.Show(e.Error.Message));
                     return;
                 }
@@ -99,8 +88,7 @@ namespace facebook_windows_phone_sample.Pages
 
                 // since this is an async callback, make sure to be on the right thread
                 // when working with the UI.
-                Dispatcher.BeginInvoke(() =>
-                {
+                Dispatcher.BeginInvoke(() => {
                     TotalFriends.Text = string.Format("You have {0} friend(s).", count);
                 });
             };
@@ -113,20 +101,16 @@ namespace facebook_windows_phone_sample.Pages
         }
 
         private string _lastMessageId;
-        private void PostToWall_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(txtMessage.Text))
-            {
+        private void PostToWall_Click(object sender, RoutedEventArgs e) {
+            if (string.IsNullOrEmpty(txtMessage.Text)) {
                 MessageBox.Show("Enter message.");
                 return;
             }
 
             var fb = new FacebookClient(_accessToken);
 
-            fb.PostCompleted += (o, args) =>
-            {
-                if (args.Error != null)
-                {
+            fb.PostCompleted += (o, args) => {
+                if (args.Error != null) {
                     Dispatcher.BeginInvoke(() => MessageBox.Show(args.Error.Message));
                     return;
                 }
@@ -134,37 +118,50 @@ namespace facebook_windows_phone_sample.Pages
                 var result = (IDictionary<string, object>)args.GetResultData();
                 _lastMessageId = (string)result["id"];
 
-                Dispatcher.BeginInvoke(() =>
-                {
+                Dispatcher.BeginInvoke(() => {
                     MessageBox.Show("Message Posted successfully");
 
                     txtMessage.Text = string.Empty;
                     btnDeleteLastMessage.IsEnabled = true;
                 });
             };
+            try {
+                string PictureUrl = "/Koala.jpg";
+                //string PictureUrl = string.Format("https://graph.facebook.com/{0}/picture?type={1}&access_token={2}", _userId, "square", _accessToken);
 
-            var parameters = new Dictionary<string, object>();
-            parameters["message"] = txtMessage.Text;
+                BitmapImage bitmapPhoto = new BitmapImage(new Uri(PictureUrl, UriKind.RelativeOrAbsolute));
 
-            fb.PostAsync("me/feed", parameters);
+                FacebookMediaObject media = new FacebookMediaObject {
+                    FileName = "Result",
+                    ContentType = "image/jpeg"
+                };
+                media.SetValue(bitmapPhoto.ConvertToBytes());
+                
+                var parameters = new Dictionary<string, object>();
+                parameters["message"] = txtMessage.Text;
+                parameters["media"] = media;
+                //parameters["link"] = profilePictureUrl;
+                //parameters["picture"] = profilePictureUrl;
+
+                //fb.PostAsync("me/feed", parameters);
+                fb.PostAsync("me/photos", parameters);
+            } catch (Exception except) {
+                MessageBox.Show(except.ToString());
+            }
         }
 
-        private void DeleteLastMessage_Click(object sender, RoutedEventArgs e)
-        {
+        private void DeleteLastMessage_Click(object sender, RoutedEventArgs e) {
             btnDeleteLastMessage.IsEnabled = false;
 
             var fb = new FacebookClient(_accessToken);
 
-            fb.DeleteCompleted += (o, args) =>
-            {
-                if (args.Error != null)
-                {
+            fb.DeleteCompleted += (o, args) => {
+                if (args.Error != null) {
                     Dispatcher.BeginInvoke(() => MessageBox.Show(args.Error.Message));
                     return;
                 }
 
-                Dispatcher.BeginInvoke(() =>
-                {
+                Dispatcher.BeginInvoke(() => {
                     MessageBox.Show("Message deleted successfully");
                     btnDeleteLastMessage.IsEnabled = false;
                 });

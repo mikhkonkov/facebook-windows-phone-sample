@@ -12,11 +12,9 @@ using System.Windows.Shapes;
 using Microsoft.Phone.Controls;
 using Facebook;
 
-namespace facebook_windows_phone_sample.Pages
-{
-    public partial class FacebookLoginPage : PhoneApplicationPage
-    {
-        private const string AppId = ""
+namespace facebook_windows_phone_sample.Pages {
+    public partial class FacebookLoginPage : PhoneApplicationPage {
+        private const string AppId = "554819377926503";
 
         /// <summary>
         /// Extended permissions is a comma separated list of permissions to ask the user.
@@ -29,19 +27,16 @@ namespace facebook_windows_phone_sample.Pages
 
         private readonly FacebookClient _fb = new FacebookClient();
 
-        public FacebookLoginPage()
-        {
+        public FacebookLoginPage() {
             InitializeComponent();
         }
 
-        private void webBrowser1_Loaded(object sender, RoutedEventArgs e)
-        {
+        private void webBrowser1_Loaded(object sender, RoutedEventArgs e) {
             var loginUrl = GetFacebookLoginUrl(AppId, ExtendedPermissions);
             webBrowser1.Navigate(loginUrl);
         }
 
-        private Uri GetFacebookLoginUrl(string appId, string extendedPermissions)
-        {
+        private Uri GetFacebookLoginUrl(string appId, string extendedPermissions) {
             var parameters = new Dictionary<string, object>();
             parameters["client_id"] = appId;
             parameters["redirect_uri"] = "https://www.facebook.com/connect/login_success.html";
@@ -49,8 +44,7 @@ namespace facebook_windows_phone_sample.Pages
             parameters["display"] = "touch";
 
             // add the 'scope' only if we have extendedPermissions.
-            if (!string.IsNullOrEmpty(extendedPermissions))
-            {
+            if (!string.IsNullOrEmpty(extendedPermissions)) {
                 // A comma-delimited list of permissions
                 parameters["scope"] = extendedPermissions;
             }
@@ -58,34 +52,26 @@ namespace facebook_windows_phone_sample.Pages
             return _fb.GetLoginUrl(parameters);
         }
 
-        private void webBrowser1_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e)
-        {
+        private void webBrowser1_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e) {
             FacebookOAuthResult oauthResult;
-            if (!_fb.TryParseOAuthCallbackUrl(e.Uri, out oauthResult))
-            {
+            if (!_fb.TryParseOAuthCallbackUrl(e.Uri, out oauthResult)) {
                 return;
             }
 
-            if (oauthResult.IsSuccess)
-            {
+            if (oauthResult.IsSuccess) {
                 var accessToken = oauthResult.AccessToken;
                 LoginSucceded(accessToken);
-            }
-            else
-            {
+            } else {
                 // user cancelled
                 MessageBox.Show(oauthResult.ErrorDescription);
             }
         }
 
-        private void LoginSucceded(string accessToken)
-        {
+        private void LoginSucceded(string accessToken) {
             var fb = new FacebookClient(accessToken);
 
-            fb.GetCompleted += (o, e) =>
-            {
-                if (e.Error != null)
-                {
+            fb.GetCompleted += (o, e) => {
+                if (e.Error != null) {
                     Dispatcher.BeginInvoke(() => MessageBox.Show(e.Error.Message));
                     return;
                 }

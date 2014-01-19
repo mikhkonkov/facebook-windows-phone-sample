@@ -24,5 +24,14 @@ namespace facebook_windows_phone_sample.Image {
                 return ms.ToArray();
             }
         }
+
+        public static byte[] ConvertToBytes(this WriteableBitmap wbm) {
+
+            using (MemoryStream ms = new MemoryStream()) {
+                wbm.SaveJpeg(ms, wbm.PixelWidth, wbm.PixelHeight, 0, 100);
+                return ms.ToArray();
+            }
+        }
+
     }
 }

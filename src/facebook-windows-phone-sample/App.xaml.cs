@@ -138,5 +138,7 @@ namespace facebook_windows_phone_sample
         }
 
         #endregion
+
+        public static System.Windows.Media.Imaging.WriteableBitmap CapturedImage { get; set; }
     }
 }

@@ -15,14 +15,32 @@ using Facebook;
 using System.IO;
 using facebook_windows_phone_sample.Image;
 using System.IO.IsolatedStorage;
+using Microsoft.Phone.Tasks;
+using Microsoft.Phone;
 
 namespace facebook_windows_phone_sample.Pages {
     public partial class FacebookInfoPage : PhoneApplicationPage {
         private string _accessToken;
         private string _userId;
+        WriteableBitmap wbImage = null;
 
         public FacebookInfoPage() {
             InitializeComponent();
+        }
+
+        void camera_Complited(object sender, PhotoResult e) {
+            if (e.TaskResult == TaskResult.OK && e.ChosenPhoto != null) {
+                MessageBox.Show("Имя файла: " + e.OriginalFileName);
+                App.CapturedImage = PictureDecoder.DecodeJpeg(e.ChosenPhoto);
+                photoCard.Source = App.CapturedImage;
+                wbImage = App.CapturedImage;
+            }
+        }
+
+        private void Camera_Click(object sender, EventArgs e) {
+            CameraCaptureTask camera = new CameraCaptureTask();
+            camera.Completed += new EventHandler<PhotoResult>(camera_Complited);
+            camera.Show();
         }
 
         protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e) {
@@ -126,16 +144,20 @@ namespace facebook_windows_phone_sample.Pages {
                 });
             };
             try {
-                string PictureUrl = "/Koala.jpg";
-                //string PictureUrl = string.Format("https://graph.facebook.com/{0}/picture?type={1}&access_token={2}", _userId, "square", _accessToken);
 
-                BitmapImage bitmapPhoto = new BitmapImage(new Uri(PictureUrl, UriKind.RelativeOrAbsolute));
+                //string PictureUrl = "/Koala.jpg";
+                ////string PictureUrl = string.Format("https://graph.facebook.com/{0}/picture?type={1}&access_token={2}", _userId, "square", _accessToken);
 
+                //BitmapImage bitmapPhoto = new BitmapImage(new Uri(PictureUrl, UriKind.RelativeOrAbsolute));
+                if (wbImage == null) {
+                    MessageBox.Show("Изображение отсуствует!");
+                    return;
+                }
                 FacebookMediaObject media = new FacebookMediaObject {
                     FileName = "Result",
                     ContentType = "image/jpeg"
                 };
-                media.SetValue(bitmapPhoto.ConvertToBytes());
+                media.SetValue(wbImage.ConvertToBytes());
                 
                 var parameters = new Dictionary<string, object>();
                 parameters["message"] = txtMessage.Text;
